@@ -1,0 +1,57 @@
+pipeline{
+    agent any
+    environment{
+        AWS_ACC_ID = "783825026272"
+        AWS_REGION = "ap-northeast-1"
+        IMAGE_REPO = "jenkinseks"
+        IMAGE_TAG = "latest"
+        REPOSITORY_URI = "${AWS_ACC_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}"
+        registry = "783825026272.dkr.ecr.ap-northeast-1.amazonaws.com/jenkinseks"
+    }
+    stages{
+        stage('Login to ECR'){
+            steps{
+                script{
+                    sh "aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACC_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                }
+            }
+        }
+        stage('checkout Codebase'){
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: '3e752a31-8f3b-4781-9471-9bd5e9efb4ae', url: 'https://Suryaganthan@bitbucket.org/surya_95/sampleeks.git']]])                
+            }            
+        }
+        stage('Build Docker Image'){
+            steps{
+                script{
+                    dockerImage = docker.build registry
+                }
+            }
+        }
+        stage('Pushing to ECR'){
+            steps{
+                script{
+                    sh "docker push ${AWS_ACC_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}:${IMAGE_TAG}"
+                }
+            }
+        }
+        stage('TF init'){
+            steps{
+                sh 'terraform init'
+                sh 'terraform plan'
+            }
+        }
+        stage('confirmation'){
+            steps{
+                script{
+                    def userInput = input(id: 'confirm',message: 'Apply Terraform?', parameters: [[$class: 'BooleanParameterDefinition', defaultValue: false, description: 'Apply terraform', name: 'confirm']])
+                }
+            }
+        }
+        stage('TF Apply'){
+            steps{
+                sh 'terraform apply -input=false'
+            }
+        }
+    }
+}
