@@ -1,12 +1,12 @@
 pipeline{
     agent any
     environment{
-        AWS_ACC_ID = "783825026272"
+        AWS_ACC_ID = "123456789"
         AWS_REGION = "ap-northeast-1"
-        IMAGE_REPO = "jenkinseks"
+        IMAGE_REPO = "testRepo"
         IMAGE_TAG = "latest"
         REPOSITORY_URI = "${AWS_ACC_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_REPO}"
-        registry = "783825026272.dkr.ecr.ap-northeast-1.amazonaws.com/jenkinseks"
+        registry = "12345625.dkr.ecr.ap-northeast-1.amazonaws.com/testRepo"
     }
     stages{
         stage('Login to ECR'){
